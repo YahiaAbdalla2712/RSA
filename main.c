@@ -1,5 +1,8 @@
 #include <stdio.h>
 
+
+
+
 typedef int int32;
 typedef unsigned int uint32;
 typedef long long int64;
@@ -51,12 +54,24 @@ uint32 montgomery_mul(uint32 a, uint32 b) {
     return mont_reduce((uint64)a * b);
 }
 
+uint64 calc_r2(uint32 n){
+    return (uint64)(R%n)*(R%n)%n;
+}
 
+uint32 mont_exp(uint32 base, uint32 exp, uint32 n) {
+    uint64 R2 = calc_r2(n);
+    uint32 x = mont_reduce((uint64)base * R2);  
+    uint32 acc = mont_reduce(R2);                
+
+    while (exp) {
+        if (exp & 1) acc = mont_mul(acc, x);
+        x = mont_mul(x, x);
+        exp >>= 1;
+    }
+    return mont_reduce(acc); 
+}
 
 int main(){
-
-    uint32 result = extended_ecluid(26,7);
-    printf("%u",result);
 
     return 0;
 }
