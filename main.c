@@ -78,44 +78,34 @@ uint32 montgomery_exp(uint32 base, uint32 exp, uint32 n) {
 }
 
 int main(int argc, char **argv){
-    if (argc < 4) return 1;
+    if (argc < 5) return 1;
 
-    char mode = argv[1][0];
     FILE *kf = fopen(argv[2], "r");
     if (!kf) return 1;
 
-    uint32 key_exp = 0,n=0;
+    uint32 key_exp = 0, n = 0;
     read_hex(kf, &key_exp);
-    read_hex(kf,&n);
+    read_hex(kf, &n);
     fclose(kf);
 
-    if(mode == 'g'){
-        FILE *pk = fopen(argv[2], "r");
-        FILE *sk = fopen(argv[3], "w");
-        if(!pk || !sk) return 1;
+    FILE *in  = fopen(argv[3], "r");
+    FILE *out = fopen(argv[4], "w");
+    if (!in || !out) return 1;
 
-        uint32 e = 0;
-        read_hex(pk,&e);
-        fclose(pk);
+    uint32 data;
 
-        uint32 phi = 0x0001E508;
-        uint32 d = extended_ecluid(phi, e);
+    while (fscanf(in, "%x", &data) == 1) {
 
-        fprintf(sk, "%08X %08X\n", d, n);
-        fclose(sk);
-        return 0;
+        if (data >= n) {
+            fprintf(out,"%s\n","data block is greater than n");
+            continue;
+        }
+
+        uint32 result = montgomery_exp(data, key_exp, n);
+        write_hex(out, result);
     }
 
-    FILE *in = fopen(argv[3], "r");
-    FILE *out = fopen(argv[4], "w");
-    if(!in || !out) return 1;
-
-    uint32 data = 0;
-    read_hex(in, &data);
-
-    uint32 result = montgomery_exp(data, key_exp, n);
-    write_hex(out, result);
+    fclose(in);
     fclose(out);
-
     return 0;
 }
